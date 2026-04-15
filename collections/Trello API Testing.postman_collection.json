@@ -1,0 +1,3562 @@
+{
+  "info": {
+    "_postman_id": "8f123759-ee9e-4a31-b39c-8780e3102b97",
+    "name": "Trello API Testing",
+    "description": "Comprehensive Trello REST API test collection covering main functionality: Boards, Lists, Cards, Checklists, Labels, and Members. Designed for Manual QA engineers to validate core Trello API operations with positive and negative test scenarios.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "30671211"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Verify API is accessible",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has member id', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('id');",
+                  "    pm.expect(jsonData.id).to.be.a('string');",
+                  "    pm.environment.set('memberId', jsonData.id);",
+                  "});",
+                  "",
+                  "pm.test('Response has username', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('username');",
+                  "    pm.expect(jsonData.username).to.be.a('string');",
+                  "    pm.environment.set('memberUsername', jsonData.username);",
+                  "});",
+                  "",
+                  "pm.test('Response has email', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('email');",
+                  "});",
+                  "",
+                  "pm.test('Response time is less than 5s', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/members/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "members",
+                "me"
+              ]
+            },
+            "description": "Verify that the API is reachable and credentials are valid by fetching the authenticated member's profile."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify invalid key returns 401",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Override global pre-request — do NOT add real key/token",
+                  "// This request uses hardcoded invalid credentials"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401 for invalid credentials', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Response body indicates unauthorized', function () {",
+                  "    pm.expect(pm.response.text().toLowerCase()).to.include('invalid app token');",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/members/me?key=invalid_key_12345&token=invalid_token_12345",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "members",
+                "me"
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "invalid_key_12345"
+                },
+                {
+                  "key": "token",
+                  "value": "invalid_token_12345"
+                }
+              ]
+            },
+            "description": "Negative test: verify that invalid credentials return 401 Unauthorized."
+          },
+          "response": []
+        }
+      ],
+      "description": "Verify API connectivity and authentication before running other tests."
+    },
+    {
+      "name": "Boards",
+      "item": [
+        {
+          "name": "Positive Tests",
+          "item": [
+            {
+              "name": "Create a Board",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Board is created with correct name', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData.name).to.include('Test Board');",
+                      "    pm.environment.set('boardId', jsonData.id);",
+                      "    pm.environment.set('boardName', jsonData.name);",
+                      "});",
+                      "",
+                      "pm.test('Board has correct description', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.desc).to.eql('Board created by Postman API tests');",
+                      "});",
+                      "",
+                      "pm.test('Board is not closed', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.closed).to.be.false;",
+                      "});",
+                      "",
+                      "pm.test('Response has required board fields', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('name');",
+                      "    pm.expect(jsonData).to.have.property('desc');",
+                      "    pm.expect(jsonData).to.have.property('url');",
+                      "    pm.expect(jsonData).to.have.property('shortUrl');",
+                      "    pm.expect(jsonData).to.have.property('prefs');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/boards/?name=Test Board{{$timestamp}}&desc=Board created by Postman API tests&defaultLists=false",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "boards",
+                    ""
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Test Board{{$timestamp}}"
+                    },
+                    {
+                      "key": "desc",
+                      "value": "Board created by Postman API tests"
+                    },
+                    {
+                      "key": "defaultLists",
+                      "value": "false"
+                    }
+                  ]
+                },
+                "description": "Create a new board. This board will be used throughout the test run."
+              },
+              "response": []
+            },
+            {
+              "name": "Get a Board",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Returned board matches created board', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.id).to.eql(pm.environment.get('boardId'));",
+                      "    pm.expect(jsonData.name).to.eql(pm.environment.get('boardName'));",
+                      "});",
+                      "",
+                      "pm.test('Board has all expected properties', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('name');",
+                      "    pm.expect(jsonData).to.have.property('desc');",
+                      "    pm.expect(jsonData).to.have.property('closed');",
+                      "    pm.expect(jsonData).to.have.property('idOrganization');",
+                      "    pm.expect(jsonData).to.have.property('url');",
+                      "    pm.expect(jsonData).to.have.property('prefs');",
+                      "    pm.expect(jsonData).to.have.property('labelNames');",
+                      "});",
+                      "",
+                      "pm.test('Response time is acceptable', function () {",
+                      "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/boards/{{boardId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "boards",
+                    "{{boardId}}"
+                  ]
+                },
+                "description": "Get the board created in the previous step."
+              },
+              "response": []
+            },
+            {
+              "name": "Update a Board",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Board name is updated', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.include('Updated Board');",
+                      "    pm.environment.set('boardName', jsonData.name);",
+                      "});",
+                      "",
+                      "pm.test('Board description is updated', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.desc).to.eql('Updated description');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "packages": {},
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/boards/{{boardId}}?name=Updated Board {{$timestamp}}&desc=Updated description",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "boards",
+                    "{{boardId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Updated Board {{$timestamp}}"
+                    },
+                    {
+                      "key": "desc",
+                      "value": "Updated description"
+                    }
+                  ]
+                },
+                "description": "Update board name and description."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Board Members",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response is an array', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.be.an('array');",
+                      "});",
+                      "",
+                      "pm.test('At least one member exists (the creator)', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.length).to.be.at.least(1);",
+                      "});",
+                      "",
+                      "pm.test('Each member has required fields', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    jsonData.forEach(function(member) {",
+                      "        pm.expect(member).to.have.property('id');",
+                      "        pm.expect(member).to.have.property('fullName');",
+                      "        pm.expect(member).to.have.property('username');",
+                      "    });",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "packages": {},
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/boards/{{boardId}}/members",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "boards",
+                    "{{boardId}}",
+                    "members"
+                  ]
+                },
+                "description": "Get all members of the board."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Board Labels",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response is an array of labels', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.be.an('array');",
+                      "});",
+                      "",
+                      "pm.test('Default labels exist on new board', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.length).to.be.at.least(1);",
+                      "});",
+                      "",
+                      "pm.test('Each label has required properties', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    jsonData.forEach(function(label) {",
+                      "        pm.expect(label).to.have.property('id');",
+                      "        pm.expect(label).to.have.property('idBoard');",
+                      "        pm.expect(label).to.have.property('color');",
+                      "    });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/boards/{{boardId}}/labels",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "boards",
+                    "{{boardId}}",
+                    "labels"
+                  ]
+                },
+                "description": "Get all labels on the board."
+              },
+              "response": []
+            },
+            {
+              "name": "Get a Field on a Board",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response contains the board name value', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('_value');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "packages": {},
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/boards/{{boardId}}/name",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "boards",
+                    "{{boardId}}",
+                    "name"
+                  ]
+                },
+                "description": "Get a specific field (name) on a board."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Negative Tests",
+          "item": [
+            {
+              "name": "Get a Board with invalid ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 400 for invalid board ID', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/boards/invalid_id_12345",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "boards",
+                    "invalid_id_12345"
+                  ]
+                },
+                "description": "Negative test: attempt to get a board with an invalid ID."
+              },
+              "response": []
+            },
+            {
+              "name": "Create a Board without name",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 400 when name is missing', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/boards/",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "boards",
+                    ""
+                  ]
+                },
+                "description": "Negative test: attempt to create a board without providing a name."
+              },
+              "response": []
+            },
+            {
+              "name": "Update a non-existent Board",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 404 for non-existent board', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/boards/0100?name=Ghost Board",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "boards",
+                    "0100"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Ghost Board"
+                    }
+                  ]
+                },
+                "description": "Negative test: attempt to update a board that doesn't exist."
+              },
+              "response": []
+            },
+            {
+              "name": "Delete a non-existent Board",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 404 for non-existent board', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/boards/0100",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "boards",
+                    "0100"
+                  ]
+                },
+                "description": "Negative test: attempt to delete a board that doesn't exist."
+              },
+              "response": []
+            }
+          ]
+        }
+      ],
+      "description": "Tests for Board CRUD operations."
+    },
+    {
+      "name": "Lists",
+      "item": [
+        {
+          "name": "Positive Tests",
+          "item": [
+            {
+              "name": "Create List - To Do",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('List is created with correct name', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('To Do');",
+                      "    pm.environment.set('todoListId', jsonData.id);",
+                      "});",
+                      "",
+                      "pm.test('List belongs to correct board', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.idBoard).to.eql(pm.environment.get('boardId'));",
+                      "});",
+                      "",
+                      "pm.test('List is not closed', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.closed).to.be.false;",
+                      "});",
+                      "",
+                      "pm.test('Response has required list fields', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('name');",
+                      "    pm.expect(jsonData).to.have.property('idBoard');",
+                      "    pm.expect(jsonData).to.have.property('closed');",
+                      "    pm.expect(jsonData).to.have.property('pos');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "packages": {},
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/lists?name=To Do&idBoard={{boardId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "lists"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "To Do"
+                    },
+                    {
+                      "key": "idBoard",
+                      "value": "{{boardId}}"
+                    }
+                  ]
+                },
+                "description": "Create a 'To Do' list on the test board."
+              },
+              "response": []
+            },
+            {
+              "name": "Create List - In Progress",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('List is created with correct name', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('In Progress');",
+                      "    pm.environment.set('inProgressListId', jsonData.id);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/lists?name=In Progress&idBoard={{boardId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "lists"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "In Progress"
+                    },
+                    {
+                      "key": "idBoard",
+                      "value": "{{boardId}}"
+                    }
+                  ]
+                },
+                "description": "Create an 'In Progress' list on the test board."
+              },
+              "response": []
+            },
+            {
+              "name": "Create List - Done",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('List is created with correct name', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('Done');",
+                      "    pm.environment.set('doneListId', jsonData.id);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "packages": {},
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/lists?name=Done&idBoard={{boardId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "lists"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Done"
+                    },
+                    {
+                      "key": "idBoard",
+                      "value": "{{boardId}}"
+                    }
+                  ]
+                },
+                "description": "Create a 'Done' list on the test board."
+              },
+              "response": []
+            },
+            {
+              "name": "Get a List",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Correct list is returned', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.id).to.eql(pm.environment.get('todoListId'));",
+                      "    pm.expect(jsonData.name).to.eql('To Do');",
+                      "});",
+                      "",
+                      "pm.test('List has all expected properties', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('name');",
+                      "    pm.expect(jsonData).to.have.property('closed');",
+                      "    pm.expect(jsonData).to.have.property('pos');",
+                      "    pm.expect(jsonData).to.have.property('idBoard');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "packages": {},
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/lists/{{todoListId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "lists",
+                    "{{todoListId}}"
+                  ]
+                },
+                "description": "Get the 'To Do' list by ID."
+              },
+              "response": []
+            },
+            {
+              "name": "Update a List",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('List name is updated', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('Backlog');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/lists/{{todoListId}}?name=Backlog",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "lists",
+                    "{{todoListId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Backlog"
+                    }
+                  ]
+                },
+                "description": "Rename 'To Do' list to 'Backlog'."
+              },
+              "response": []
+            },
+            {
+              "name": "Rename List back to To Do",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('List name is reverted', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('To Do');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/lists/{{todoListId}}?name=To Do",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "lists",
+                    "{{todoListId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "To Do"
+                    }
+                  ]
+                },
+                "description": "Rename list back to 'To Do' for subsequent tests."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Lists on Board",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Board has 3 lists', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.be.an('array');",
+                      "    pm.expect(jsonData.length).to.eql(3);",
+                      "});",
+                      "",
+                      "pm.test('Lists have correct names', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    const names = jsonData.map(i => i.name);",
+                      "    pm.expect(names).to.include('To Do');",
+                      "    pm.expect(names).to.include('In Progress');",
+                      "    pm.expect(names).to.include('Done');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "packages": {},
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/boards/{{boardId}}/lists",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "boards",
+                    "{{boardId}}",
+                    "lists"
+                  ]
+                },
+                "description": "Get all lists on the test board."
+              },
+              "response": []
+            },
+            {
+              "name": "Archive a List",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('List is archived', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.closed).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/lists/{{doneListId}}/closed?value=true",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "lists",
+                    "{{doneListId}}",
+                    "closed"
+                  ],
+                  "query": [
+                    {
+                      "key": "value",
+                      "value": "true"
+                    }
+                  ]
+                },
+                "description": "Archive (close) the 'Done' list."
+              },
+              "response": []
+            },
+            {
+              "name": "Unarchive a List",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('List is unarchived', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.closed).to.be.false;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/lists/{{doneListId}}/closed?value=false",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "lists",
+                    "{{doneListId}}",
+                    "closed"
+                  ],
+                  "query": [
+                    {
+                      "key": "value",
+                      "value": "false"
+                    }
+                  ]
+                },
+                "description": "Unarchive (re-open) the 'Done' list."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Negative Tests",
+          "item": [
+            {
+              "name": "Create List without board ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 400 when board ID is missing', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/lists?name=Orphan List",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "lists"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Orphan List"
+                    }
+                  ]
+                },
+                "description": "Negative test: create a list without specifying a board."
+              },
+              "response": []
+            },
+            {
+              "name": "Create List without name",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 400 when name is missing', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/lists?idBoard={{boardId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "lists"
+                  ],
+                  "query": [
+                    {
+                      "key": "idBoard",
+                      "value": "{{boardId}}"
+                    }
+                  ]
+                },
+                "description": "Negative test: create a list without providing a name."
+              },
+              "response": []
+            },
+            {
+              "name": "Get a non-existent List",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 404', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/lists/0100",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "lists",
+                    "0100"
+                  ]
+                },
+                "description": "Negative test: get a list that doesn't exist."
+              },
+              "response": []
+            }
+          ]
+        }
+      ],
+      "description": "Tests for List CRUD operations and lifecycle (archive/unarchive)."
+    },
+    {
+      "name": "Cards",
+      "item": [
+        {
+          "name": "Positive Tests",
+          "item": [
+            {
+              "name": "Create a Card",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Card is created with correct data', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('Test Card 1');",
+                      "    pm.expect(jsonData.desc).to.eql('First test card');",
+                      "    pm.expect(jsonData.idList).to.eql(pm.environment.get('todoListId'));",
+                      "    pm.environment.set('cardId', jsonData.id);",
+                      "});",
+                      "",
+                      "pm.test('Card is not closed', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.closed).to.be.false;",
+                      "});",
+                      "",
+                      "pm.test('Response has required card fields', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('name');",
+                      "    pm.expect(jsonData).to.have.property('desc');",
+                      "    pm.expect(jsonData).to.have.property('idList');",
+                      "    pm.expect(jsonData).to.have.property('idBoard');",
+                      "    pm.expect(jsonData).to.have.property('url');",
+                      "    pm.expect(jsonData).to.have.property('shortUrl');",
+                      "    pm.expect(jsonData).to.have.property('pos');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "packages": {},
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards?name=Test Card 1&desc=First test card&idList={{todoListId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Test Card 1"
+                    },
+                    {
+                      "key": "desc",
+                      "value": "First test card"
+                    },
+                    {
+                      "key": "idList",
+                      "value": "{{todoListId}}"
+                    }
+                  ]
+                },
+                "description": "Create a card in the 'To Do' list."
+              },
+              "response": []
+            },
+            {
+              "name": "Create a Card with due date",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Card has due date set', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.due).to.not.be.null;",
+                      "    pm.expect(jsonData.due).to.include('2026-12-31');",
+                      "    pm.environment.set('cardWithDueDateId', jsonData.id);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "packages": {},
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards?name=Card with Due Date&idList={{todoListId}}&due=2026-12-31T23:59:59.000Z",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Card with Due Date"
+                    },
+                    {
+                      "key": "idList",
+                      "value": "{{todoListId}}"
+                    },
+                    {
+                      "key": "due",
+                      "value": "2026-12-31T23:59:59.000Z"
+                    }
+                  ]
+                },
+                "description": "Create a card with a due date."
+              },
+              "response": []
+            },
+            {
+              "name": "Get a Card",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Correct card is returned', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.id).to.eql(pm.environment.get('cardId'));",
+                      "    pm.expect(jsonData.name).to.eql('Test Card 1');",
+                      "});",
+                      "",
+                      "pm.test('Card has all expected properties', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('name');",
+                      "    pm.expect(jsonData).to.have.property('desc');",
+                      "    pm.expect(jsonData).to.have.property('closed');",
+                      "    pm.expect(jsonData).to.have.property('idList');",
+                      "    pm.expect(jsonData).to.have.property('idBoard');",
+                      "    pm.expect(jsonData).to.have.property('labels');",
+                      "    pm.expect(jsonData).to.have.property('badges');",
+                      "    pm.expect(jsonData).to.have.property('due');",
+                      "    pm.expect(jsonData).to.have.property('dateLastActivity');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/{{cardId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "{{cardId}}"
+                  ]
+                },
+                "description": "Get the first created card by ID."
+              },
+              "response": []
+            },
+            {
+              "name": "Update a Card",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Card name is updated', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('Updated Card 1');",
+                      "});",
+                      "",
+                      "pm.test('Card description is updated', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.desc).to.eql('Updated description');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "packages": {},
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/{{cardId}}?name=Updated Card 1&desc=Updated description",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "{{cardId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Updated Card 1"
+                    },
+                    {
+                      "key": "desc",
+                      "value": "Updated description"
+                    }
+                  ]
+                },
+                "description": "Update card name and description."
+              },
+              "response": []
+            },
+            {
+              "name": "Move Card to another List",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Card is moved to In Progress list', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.idList).to.eql(pm.environment.get('inProgressListId'));",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/{{cardId}}?idList={{inProgressListId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "{{cardId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "idList",
+                      "value": "{{inProgressListId}}"
+                    }
+                  ]
+                },
+                "description": "Move card from 'To Do' to 'In Progress'."
+              },
+              "response": []
+            },
+            {
+              "name": "Move Card to Done",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Card is moved to Done list', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.idList).to.eql(pm.environment.get('doneListId'));",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/{{cardId}}?idList={{doneListId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "{{cardId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "idList",
+                      "value": "{{doneListId}}"
+                    }
+                  ]
+                },
+                "description": "Move card from 'In Progress' to 'Done'."
+              },
+              "response": []
+            },
+            {
+              "name": "Add a Comment to a Card",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Comment is added', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData.type).to.eql('commentCard');",
+                      "    pm.environment.set('commentId', jsonData.id);",
+                      "});",
+                      "",
+                      "pm.test('Comment text matches', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.data.text).to.eql('This is a test comment');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/{{cardId}}/actions/comments?text=This is a test comment",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "{{cardId}}",
+                    "actions",
+                    "comments"
+                  ],
+                  "query": [
+                    {
+                      "key": "text",
+                      "value": "This is a test comment"
+                    }
+                  ]
+                },
+                "description": "Add a comment to a card."
+              },
+              "response": []
+            },
+            {
+              "name": "Update a Comment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Comment text is updated', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.data.text).to.eql('Updated comment text');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/{{cardId}}/actions/{{commentId}}/comments?text=Updated comment text",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "{{cardId}}",
+                    "actions",
+                    "{{commentId}}",
+                    "comments"
+                  ],
+                  "query": [
+                    {
+                      "key": "text",
+                      "value": "Updated comment text"
+                    }
+                  ]
+                },
+                "description": "Update the comment text on a card."
+              },
+              "response": []
+            },
+            {
+              "name": "Delete a Comment",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/{{cardId}}/actions/{{commentId}}/comments",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "{{cardId}}",
+                    "actions",
+                    "{{commentId}}",
+                    "comments"
+                  ]
+                },
+                "description": "Delete a comment from a card."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Cards on a Board",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response is an array with cards', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.be.an('array');",
+                      "    pm.expect(jsonData.length).to.be.at.least(1);",
+                      "});",
+                      "",
+                      "pm.test('Cards belong to the correct board', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    jsonData.forEach(function(card) {",
+                      "        pm.expect(card.idBoard).to.eql(pm.environment.get('boardId'));",
+                      "    });",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/boards/{{boardId}}/cards",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "boards",
+                    "{{boardId}}",
+                    "cards"
+                  ]
+                },
+                "description": "Get all cards on the test board."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Cards in a List",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response is an array', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.be.an('array');",
+                      "});",
+                      "",
+                      "pm.test('Moved card is in the Done list', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    const cardIds = jsonData.map(c => c.id);",
+                      "    pm.expect(cardIds).to.include(pm.environment.get('cardId'));",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/lists/{{doneListId}}/cards",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "lists",
+                    "{{doneListId}}",
+                    "cards"
+                  ]
+                },
+                "description": "Get all cards in the Done list."
+              },
+              "response": []
+            },
+            {
+              "name": "Archive a Card",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Card is archived', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.closed).to.be.true;",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/{{cardWithDueDateId}}?closed=true",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "{{cardWithDueDateId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "closed",
+                      "value": "true"
+                    }
+                  ]
+                },
+                "description": "Archive a card."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Negative Tests",
+          "item": [
+            {
+              "name": "Create a Card without list ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 400 when list ID is missing', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards?name=Orphan Card",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Orphan Card"
+                    }
+                  ]
+                },
+                "description": "Negative test: create a card without a list ID."
+              },
+              "response": []
+            },
+            {
+              "name": "Get a non-existent Card",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 404', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/0100",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "0100"
+                  ]
+                },
+                "description": "Negative test: get a card that doesn't exist."
+              },
+              "response": []
+            },
+            {
+              "name": "Update a Card with invalid ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 400 for invalid card ID', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/invalid_id?name=Ghost",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "invalid_id"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Ghost"
+                    }
+                  ]
+                },
+                "description": "Negative test: update a card with an invalid ID format."
+              },
+              "response": []
+            },
+            {
+              "name": "Delete a non-existent Card",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 404', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/0100",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "0100"
+                  ]
+                },
+                "description": "Negative test: delete a card that doesn't exist."
+              },
+              "response": []
+            }
+          ]
+        }
+      ],
+      "description": "Tests for Card CRUD operations, moving cards between lists, comments, and archiving."
+    },
+    {
+      "name": "Checklists",
+      "item": [
+        {
+          "name": "Positive Tests",
+          "item": [
+            {
+              "name": "Create a Checklist",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Checklist is created with correct name', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('QA Checklist');",
+                      "    pm.environment.set('checklistId', jsonData.id);",
+                      "});",
+                      "",
+                      "pm.test('Checklist belongs to correct card', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.idCard).to.eql(pm.environment.get('cardId'));",
+                      "});",
+                      "",
+                      "pm.test('Response has required checklist fields', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('name');",
+                      "    pm.expect(jsonData).to.have.property('idCard');",
+                      "    pm.expect(jsonData).to.have.property('idBoard');",
+                      "    pm.expect(jsonData).to.have.property('checkItems');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/checklists?idCard={{cardId}}&name=QA Checklist",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "checklists"
+                  ],
+                  "query": [
+                    {
+                      "key": "idCard",
+                      "value": "{{cardId}}"
+                    },
+                    {
+                      "key": "name",
+                      "value": "QA Checklist"
+                    }
+                  ]
+                },
+                "description": "Create a checklist on the test card."
+              },
+              "response": []
+            },
+            {
+              "name": "Get a Checklist",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Correct checklist returned', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.id).to.eql(pm.environment.get('checklistId'));",
+                      "    pm.expect(jsonData.name).to.eql('QA Checklist');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/checklists/:checklistId",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "checklists",
+                    ":checklistId"
+                  ],
+                  "variable": [
+                    {
+                      "key": "checklistId",
+                      "value": "{{checklistId}}"
+                    }
+                  ]
+                },
+                "description": "Get the created checklist by ID."
+              },
+              "response": []
+            },
+            {
+              "name": "Update a Checklist",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Checklist name is updated', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('Updated QA Checklist');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/checklists/{{checklistId}}?name=Updated QA Checklist",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "checklists",
+                    "{{checklistId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Updated QA Checklist"
+                    }
+                  ]
+                },
+                "description": "Update the checklist name."
+              },
+              "response": []
+            },
+            {
+              "name": "Create CheckItem 1",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('CheckItem is created', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('Write test cases');",
+                      "    pm.expect(jsonData.state).to.eql('incomplete');",
+                      "    pm.environment.set('checkItemId', jsonData.id);",
+                      "});",
+                      "",
+                      "pm.test('Response has required fields', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('name');",
+                      "    pm.expect(jsonData).to.have.property('state');",
+                      "    pm.expect(jsonData).to.have.property('pos');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/checklists/{{checklistId}}/checkItems?name=Write test cases",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "checklists",
+                    "{{checklistId}}",
+                    "checkItems"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Write test cases"
+                    }
+                  ]
+                },
+                "description": "Add a checkitem to the checklist."
+              },
+              "response": []
+            },
+            {
+              "name": "Create CheckItem 2",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Second CheckItem is created', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('Execute test cases');",
+                      "    pm.environment.set('checkItemId2', jsonData.id);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/checklists/{{checklistId}}/checkItems?name=Execute test cases",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "checklists",
+                    "{{checklistId}}",
+                    "checkItems"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Execute test cases"
+                    }
+                  ]
+                },
+                "description": "Add another checkitem to the checklist."
+              },
+              "response": []
+            },
+            {
+              "name": "Mark CheckItem as Complete",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('CheckItem is marked as complete', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.state).to.eql('complete');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/{{cardId}}/checkItem/{{checkItemId}}?state=complete",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "{{cardId}}",
+                    "checkItem",
+                    "{{checkItemId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "state",
+                      "value": "complete"
+                    }
+                  ]
+                },
+                "description": "Mark the first checkitem as complete."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Checkitems on Checklist",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('There are 2 checkitems', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.be.an('array');",
+                      "    pm.expect(jsonData.length).to.eql(2);",
+                      "});",
+                      "",
+                      "pm.test('One checkitem is complete', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    const complete = jsonData.filter(i => i.state === 'complete');",
+                      "    pm.expect(complete.length).to.eql(1);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/checklists/{{checklistId}}/checkItems",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "checklists",
+                    "{{checklistId}}",
+                    "checkItems"
+                  ]
+                },
+                "description": "Get all checkitems on the checklist."
+              },
+              "response": []
+            },
+            {
+              "name": "Delete a CheckItem",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/checklists/{{checklistId}}/checkItems/{{checkItemId2}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "checklists",
+                    "{{checklistId}}",
+                    "checkItems",
+                    "{{checkItemId2}}"
+                  ]
+                },
+                "description": "Delete the second checkitem from the checklist."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Negative Tests",
+          "item": [
+            {
+              "name": "Create Checklist without card ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 400 when card ID missing', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 404, 422]);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/checklists?name=Orphan Checklist",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "checklists"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Orphan Checklist"
+                    }
+                  ]
+                },
+                "description": "Negative test: create a checklist without a card ID."
+              },
+              "response": []
+            },
+            {
+              "name": "Get non-existent Checklist",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 404', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/checklists/0100",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "checklists",
+                    "0100"
+                  ]
+                },
+                "description": "Negative test: get a checklist that doesn't exist."
+              },
+              "response": []
+            }
+          ]
+        }
+      ],
+      "description": "Tests for Checklist and CheckItem CRUD operations."
+    },
+    {
+      "name": "Labels",
+      "item": [
+        {
+          "name": "Positive Tests",
+          "item": [
+            {
+              "name": "Create a Label",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Label is created with correct data', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('Bug');",
+                      "    pm.expect(jsonData.color).to.eql('red');",
+                      "    pm.environment.set('labelId', jsonData.id);",
+                      "});",
+                      "",
+                      "pm.test('Response has required label fields', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('name');",
+                      "    pm.expect(jsonData).to.have.property('color');",
+                      "    pm.expect(jsonData).to.have.property('idBoard');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/labels?name=Bug&color=red&idBoard={{boardId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "labels"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Bug"
+                    },
+                    {
+                      "key": "color",
+                      "value": "red"
+                    },
+                    {
+                      "key": "idBoard",
+                      "value": "{{boardId}}"
+                    }
+                  ]
+                },
+                "description": "Create a red 'Bug' label on the test board."
+              },
+              "response": []
+            },
+            {
+              "name": "Create a second Label",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Label created with correct color', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('Feature');",
+                      "    pm.expect(jsonData.color).to.eql('green');",
+                      "    pm.environment.set('labelId2', jsonData.id);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/labels?name=Feature&color=green&idBoard={{boardId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "labels"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Feature"
+                    },
+                    {
+                      "key": "color",
+                      "value": "green"
+                    },
+                    {
+                      "key": "idBoard",
+                      "value": "{{boardId}}"
+                    }
+                  ]
+                },
+                "description": "Create a green 'Feature' label on the test board."
+              },
+              "response": []
+            },
+            {
+              "name": "Get a Label",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Correct label is returned', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.id).to.eql(pm.environment.get('labelId'));",
+                      "    pm.expect(jsonData.name).to.eql('Bug');",
+                      "    pm.expect(jsonData.color).to.eql('red');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/labels/{{labelId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "labels",
+                    "{{labelId}}"
+                  ]
+                },
+                "description": "Get the created Bug label by ID."
+              },
+              "response": []
+            },
+            {
+              "name": "Update a Label",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Label name is updated', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.name).to.eql('Critical Bug');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/labels/{{labelId}}?name=Critical Bug&color=red",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "labels",
+                    "{{labelId}}"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Critical Bug"
+                    },
+                    {
+                      "key": "color",
+                      "value": "red"
+                    }
+                  ]
+                },
+                "description": "Update the Bug label name."
+              },
+              "response": []
+            },
+            {
+              "name": "Add Label to Card",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/{{cardId}}/idLabels?value={{labelId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "{{cardId}}",
+                    "idLabels"
+                  ],
+                  "query": [
+                    {
+                      "key": "value",
+                      "value": "{{labelId}}"
+                    }
+                  ]
+                },
+                "description": "Add the Bug label to the test card."
+              },
+              "response": []
+            },
+            {
+              "name": "Verify Label is on Card",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Card has the label', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    const labelIds = jsonData.idLabels;",
+                      "    pm.expect(labelIds).to.include(pm.environment.get('labelId'));",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/{{cardId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "{{cardId}}"
+                  ]
+                },
+                "description": "Verify that the label was added to the card."
+              },
+              "response": []
+            },
+            {
+              "name": "Remove Label from Card",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/cards/{{cardId}}/idLabels/{{labelId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cards",
+                    "{{cardId}}",
+                    "idLabels",
+                    "{{labelId}}"
+                  ]
+                },
+                "description": "Remove the label from the card."
+              },
+              "response": []
+            },
+            {
+              "name": "Delete a Label",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/labels/{{labelId2}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "labels",
+                    "{{labelId2}}"
+                  ]
+                },
+                "description": "Delete the Feature label."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Negative Tests",
+          "item": [
+            {
+              "name": "Create Label without board ID",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 400', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/labels?name=Orphan&color=blue",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "labels"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Orphan"
+                    },
+                    {
+                      "key": "color",
+                      "value": "blue"
+                    }
+                  ]
+                },
+                "description": "Negative test: create a label without a board ID."
+              },
+              "response": []
+            },
+            {
+              "name": "Create Label with invalid color",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Validation error is returned', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/labels?name=Test&color=rainbow&idBoard={{boardId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "labels"
+                  ],
+                  "query": [
+                    {
+                      "key": "name",
+                      "value": "Test"
+                    },
+                    {
+                      "key": "color",
+                      "value": "rainbow"
+                    },
+                    {
+                      "key": "idBoard",
+                      "value": "{{boardId}}"
+                    }
+                  ]
+                },
+                "description": "Negative test: create a label with an invalid color value."
+              },
+              "response": []
+            },
+            {
+              "name": "Get non-existent Label",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 404', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/labels/0100",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "labels",
+                    "0100"
+                  ]
+                },
+                "description": "Negative test: get a label that doesn't exist."
+              },
+              "response": []
+            }
+          ]
+        }
+      ],
+      "description": "Tests for Label CRUD operations and card-label associations."
+    },
+    {
+      "name": "Members",
+      "item": [
+        {
+          "name": "Positive Tests",
+          "item": [
+            {
+              "name": "Get Current Member",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Member has all profile fields', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('id');",
+                      "    pm.expect(jsonData).to.have.property('username');",
+                      "    pm.expect(jsonData).to.have.property('fullName');",
+                      "    pm.expect(jsonData).to.have.property('email');",
+                      "    pm.expect(jsonData).to.have.property('url');",
+                      "    pm.expect(jsonData).to.have.property('avatarUrl');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/members/me",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "members",
+                    "me"
+                  ]
+                },
+                "description": "Get the authenticated member's profile."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Member's Boards",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response is an array of boards', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.be.an('array');",
+                      "    pm.expect(jsonData.length).to.be.at.least(1);",
+                      "});",
+                      "",
+                      "pm.test('Test board is in the list', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    const boardIds = jsonData.map(b => b.id);",
+                      "    pm.expect(boardIds).to.include(pm.environment.get('boardId'));",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/members/me/boards",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "members",
+                    "me",
+                    "boards"
+                  ]
+                },
+                "description": "Get all boards the member belongs to."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Member's Organizations",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response is an array', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.be.an('array');",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/members/me/organizations",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "members",
+                    "me",
+                    "organizations"
+                  ]
+                },
+                "description": "Get all organizations the member belongs to."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Member by Username",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Correct member is returned', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData.username).to.eql(pm.environment.get('memberUsername'));",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/members/{{memberUsername}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "members",
+                    "{{memberUsername}}"
+                  ]
+                },
+                "description": "Get a member by their username."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Negative Tests",
+          "item": [
+            {
+              "name": "Get non-existent Member",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 404 for non-existent member', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/members/PesPatron123456",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "members",
+                    "PesPatron123456"
+                  ]
+                },
+                "description": "Negative test: get a member that doesn't exist."
+              },
+              "response": []
+            }
+          ]
+        }
+      ],
+      "description": "Tests for Member read operations."
+    },
+    {
+      "name": "Search",
+      "item": [
+        {
+          "name": "Positive Tests",
+          "item": [
+            {
+              "name": "Search for Boards",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has boards array', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('boards');",
+                      "    pm.expect(jsonData.boards).to.be.an('array');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/search?query=Updated Board&modelTypes=boards",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "query",
+                      "value": "Updated Board"
+                    },
+                    {
+                      "key": "modelTypes",
+                      "value": "boards"
+                    }
+                  ]
+                },
+                "description": "Search for boards by name."
+              },
+              "response": []
+            },
+            {
+              "name": "Search for Cards",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response has cards array', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.have.property('cards');",
+                      "    pm.expect(jsonData.cards).to.be.an('array');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/search?query=Updated Card&modelTypes=cards",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "search"
+                  ],
+                  "query": [
+                    {
+                      "key": "query",
+                      "value": "Updated Card"
+                    },
+                    {
+                      "key": "modelTypes",
+                      "value": "cards"
+                    }
+                  ]
+                },
+                "description": "Search for cards by name."
+              },
+              "response": []
+            },
+            {
+              "name": "Search for Members",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code is 200', function () {",
+                      "    pm.response.to.have.status(200);",
+                      "});",
+                      "",
+                      "pm.test('Response is an array', function () {",
+                      "    const jsonData = pm.response.json();",
+                      "    pm.expect(jsonData).to.be.an('array');",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/search/members?query={{memberUsername}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "search",
+                    "members"
+                  ],
+                  "query": [
+                    {
+                      "key": "query",
+                      "value": "{{memberUsername}}"
+                    }
+                  ]
+                },
+                "description": "Search for members by username."
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Negative Tests",
+          "item": [
+            {
+              "name": "Search without query",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test('Status code is 400 when query is missing', function () {",
+                      "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+                      "});"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/search",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "search"
+                  ]
+                },
+                "description": "Negative test: search without providing a query."
+              },
+              "response": []
+            }
+          ]
+        }
+      ],
+      "description": "Tests for Trello Search functionality."
+    },
+    {
+      "name": "Cleanup",
+      "item": [
+        {
+          "name": "Delete Card",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Card deleted successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cards/{{cardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cards",
+                "{{cardId}}"
+              ]
+            },
+            "description": "Delete the test card."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Card with Due Date",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Card deleted successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/cards/{{cardWithDueDateId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "cards",
+                "{{cardWithDueDateId}}"
+              ]
+            },
+            "description": "Delete the card with due date."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Board",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Board deleted successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Clean up environment variables",
+                  "pm.environment.unset('boardId');",
+                  "pm.environment.unset('boardName');",
+                  "pm.environment.unset('todoListId');",
+                  "pm.environment.unset('inProgressListId');",
+                  "pm.environment.unset('doneListId');",
+                  "pm.environment.unset('cardId');",
+                  "pm.environment.unset('cardWithDueDateId');",
+                  "pm.environment.unset('checklistId');",
+                  "pm.environment.unset('checkItemId');",
+                  "pm.environment.unset('checkItemId2');",
+                  "pm.environment.unset('labelId');",
+                  "pm.environment.unset('labelId2');",
+                  "pm.environment.unset('commentId');",
+                  "pm.environment.unset('memberId');",
+                  "pm.environment.unset('memberUsername');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/boards/{{boardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "boards",
+                "{{boardId}}"
+              ]
+            },
+            "description": "Delete the test board. This also deletes all lists, cards, checklists, and labels associated with it."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Board is Deleted",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Board no longer exists', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([400, 404]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/boards/{{boardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "boards",
+                "{{boardId}}"
+              ]
+            },
+            "description": "Verify that the deleted board is no longer accessible."
+          },
+          "response": []
+        }
+      ],
+      "description": "Cleanup: delete all test data created during the test run."
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "value",
+        "value": "{{apiKey}}",
+        "type": "string"
+      },
+      {
+        "key": "key",
+        "value": "key",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "query",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request: append token to every request",
+          "const token = pm.environment.get('apiToken');",
+          "const key = pm.environment.get('apiKey');",
+          "if (!key || !token) {",
+          "    console.warn('WARNING: apiKey or apiToken not set in environment!');",
+          "}",
+          "",
+          "// Add key and token as query params",
+          "let url = pm.request.url;",
+          "url.query.add({ key: 'key', value: key });",
+          "url.query.add({ key: 'token', value: token });"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}
